@@ -20,9 +20,12 @@ Once you have these prerequisites installed, you can follow these steps to downl
 The new technology is 'Ant Design' the The world's second most popular React UI framework.
 Also improve overall front-end learnings.
 
+# KNOWN ISSUES
+on filter method not fires in latest version of Ant Design beacause of some issue thats why filter functionality missing in e & f coloumn
+
 # TOTAL TIME TAKEN
 
-8 hours
+9 hours
 
 
 

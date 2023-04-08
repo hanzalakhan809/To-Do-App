@@ -1,5 +1,5 @@
 import { Table, Card, Modal, Button, Input, Form, Radio, Tag } from 'antd';
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, CloseOutlined } from "@ant-design/icons";
 import 'antd/dist/reset.css';
 import 'antd-css-utilities/utility.min.css'
 import { useState } from 'react'
@@ -8,30 +8,39 @@ import './App.css';
 
 
 function App() {
-
-
-  const formatDate = () => {
-    const dateString = Date.now();
-    const options = { year: "numeric", month: "numeric", day: "numeric" }
-    let date = new Date(dateString).toLocaleDateString("af-ZA", options)
-    return date.replaceAll('/', '-')
-
-  }
-  const FinalDate = formatDate();
-
-
-
+  
+    //SET CURRENT DATE FORMAT
+  
+    const formatDate = () => {
+      const dateString = Date.now();
+      const options = { year: "numeric", month: "numeric", day: "numeric" }
+      let date = new Date(dateString).toLocaleDateString("af-ZA", options)
+      return date.replaceAll('/', '-')
+    }  
+    const FinalDate = formatDate();
+  
+  //SET DEFAULT NOTES
+  
   const defaultNotes = { key: '', timeStamps: FinalDate, title: '', description: '', dueDate: '', tag: '', status: 'OPEN' };
   const defaultEditedNote = { editedkey: '', editedtimeStamps: '', editedtitle: '', editeddescription: '', editeddueDate: '', editedtag: '', editedstatus: '' };
+  
+  
+
+  //ALL STATES
 
   const [page, setpage] = useState(1);
   const [pageSize, setpageSize] = useState(10);
-  const [form] = Form.useForm()
-  let [key, setKey] = useState(1)
-  const [data, setData] = useState([])
-  const [note, setNote] = useState(defaultNotes)
+  const [form] = Form.useForm();
+  let [key, setKey] = useState(1);
+  const [data, setData] = useState([]);
+  const [note, setNote] = useState(defaultNotes);
   const [editedNote, setEditedNote] = useState(defaultEditedNote);
   const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('');
+  const [filteredData, setfilteredData] = useState('');
+
+
+
 
 
   // COVERT TAG INTO ARRAY SEPERATED BY COMMA  AND REMOVE DUPLICATE TAGS
@@ -49,7 +58,14 @@ function App() {
       return unique;
     }
     return removeDuplicates(array);
+  }
 
+  //REMOVE BLANK SPACE FROM STRING
+
+  const removeBlankSpace = (str) => {
+
+    let onlyCharacters = str.replaceAll(" ", "");
+    return onlyCharacters;
   }
 
 
@@ -63,6 +79,7 @@ function App() {
       okType: "danger",
       onOk: () => {
         setData(dataAfterDeletingNote);
+        setfilteredData(dataAfterDeletingNote)
       }
     });
   }
@@ -89,6 +106,7 @@ function App() {
     setKey(key + 1)
     const newNote = { key: key, timeStamps: timeStamps, title: title, description: description, dueDate: dueDate, tag: seperateTags(tag), status: status };
     setData(data.concat(newNote))
+    setfilteredData(filteredData.concat(newNote))
     setOpen(false)
   }
 
@@ -112,6 +130,12 @@ function App() {
     setEditedNote(null);
   };
 
+  //REMOVING SEARCH FILTER
+  const cancelSearch = () => {
+    setValue('')
+    setfilteredData('')
+  }
+
 
   const columns = [
     {
@@ -122,20 +146,17 @@ function App() {
         return row1.key > row2.key
       },
 
-     
+
     },
     {
       title: 'Title',
       dataIndex: 'title',
       key: '2',
-      filteredValue:['hi'],
-      // onFiltered : (val,record)=>{
-      //   return record.title.includes(val);
-      // },
+      filteredValue: ['hi'],
       sorter: (row1, row2) => {
         return row1.key > row2.key
       },
-   
+
     },
     {
       title: 'Description',
@@ -198,28 +219,41 @@ function App() {
       },
     },
   ];
-  // const [dataSource, setDataSource] = useState(data);
-  // const [value, setValue] = useState('');
+
+
   return (
     <>
       <Card className="container">
-       {/* <Input placeholder='Search Here...' style={{ marginBottom: 8}}
-        value={value}
-      onChange={e => {
-        {const currValue = e.target.value;
-        setValue(currValue);
-        if(currValue.length!==0){
-        const filteredData = data.filter(entry =>
-          entry.title.includes(currValue));
-        setDataSource(filteredData);}
-       else{
-        setDataSource(data)
-       } 
-       }
-      }}
-       /> */}
+
+           <h1 className='text-center' style={{ fontFamily: 'Arial'}}> To Do List</h1>
+        
+
+        <Input className='py-2' placeholder='Search Here...' style={{ marginBottom: 8 }}
+          value={value}
+          onChange={e => {
+            {
+              const currValue = e.target.value;
+              setValue(removeBlankSpace(currValue));
+              const fData = data.filter((entry) => {
+                return (
+                  entry.title.toLowerCase().includes(currValue.toLowerCase()) ||
+                  entry.timeStamps.toLowerCase().includes(currValue.toLowerCase()) ||
+                  entry.description.toLowerCase().includes(currValue.toLowerCase()) ||
+                  entry.tag.toString().toLowerCase().includes(currValue.toLowerCase()) ||
+                  entry.dueDate.toLowerCase().includes(currValue.toLowerCase()) ||
+                  entry.status.toLowerCase().includes(currValue.toLowerCase())
+
+                )
+              });
+              setfilteredData(fData);
+            }
+          }
+          }
+          suffix={<CloseOutlined onClick={cancelSearch} />}
+        />
         <Table
-          dataSource={data}
+
+          dataSource={filteredData && value !== '' ? filteredData : data}
           columns={columns}
           pagination={{
             current: page,
@@ -238,7 +272,7 @@ function App() {
 
       {/* MODAL FOR ADD NOTE */}
       <Modal
-        title="Title"
+        title="Add New To Do"
         open={open}
         onOk={handleOk}
         onCancel={handleCancel}
@@ -319,7 +353,7 @@ function App() {
 
       {/* MODAL FOR EDIT NOTE */}
       <Modal
-        title="Edit Note"
+        title="Edit To Do"
         open={isEditing}
         okText="Save"
         onCancel={() => {
@@ -337,6 +371,7 @@ function App() {
               }
             });
           });
+          setValue('')
           resetEditing();
         }}
       >
